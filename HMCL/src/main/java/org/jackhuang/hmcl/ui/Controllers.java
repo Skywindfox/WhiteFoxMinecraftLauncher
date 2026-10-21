@@ -53,7 +53,6 @@ import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
-import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.instances.GameListPage;
 import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.ui.instances.Instances;
@@ -104,7 +103,6 @@ public final class Controllers {
         return accountListPage;
     });
     private static LauncherSettingsPage settingsPage;
-    private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
     }
@@ -188,12 +186,6 @@ public final class Controllers {
             downloadPage = FXUtils.prepareNode(new DownloadPage());
         }
     }
-
-    @FXThread
-    public static Node getTerracottaPage() {
-        return terracottaPage.get();
-    }
-
     /// Returns the initialized main-window decorator.
     ///
     /// @return the application-wide main-window decorator
@@ -642,7 +634,6 @@ public final class Controllers {
         downloadPage = null;
         accountListPage = null;
         settingsPage = null;
-        terracottaPage = null;
         decorator = null;
 
         FXUtils.shutdown();
