@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.io.JarUtils;
+
 /**
  * Constants.
  *
@@ -27,7 +29,11 @@ public final class Constants {
     private Constants() {
     }
 
+    /// Root of the BMCLAPI-compatible mirror used for mainland China downloads. Forks replace it with
+    /// the `hmcl.fork.bmclapi_root` build attribute.
+    private static final String BMCLAPI_ROOT = JarUtils.getAttribute("hmcl.fork.bmclapi_root", "https://bmclapi2.bangbang93.com");
+
     public static final String DEFAULT_LIBRARY_URL = "https://libraries.minecraft.net/";
-    public static final String DEFAULT_VERSION_DOWNLOAD_URL = "https://bmclapi2.bangbang93.com/versions/";
+    public static final String DEFAULT_VERSION_DOWNLOAD_URL = BMCLAPI_ROOT + "/versions/";
     public static final String DEFAULT_INDEX_URL = "https://launchermeta.mojang.com/v1/packages/";
 }

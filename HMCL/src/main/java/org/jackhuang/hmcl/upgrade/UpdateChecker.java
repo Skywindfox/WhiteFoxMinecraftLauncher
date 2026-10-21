@@ -57,7 +57,13 @@ public final class UpdateChecker {
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
     private static final ReadOnlyObjectWrapper<@Nullable Throwable> error = new ReadOnlyObjectWrapper<>();
 
+    /// Starts the initial update check in the background when this build supports self-update.
+    ///
+    /// Builds with [`Metadata#SELF_UPDATE_ENABLED`] disabled never contact the update source at all.
     public static void init() {
+        if (!Metadata.SELF_UPDATE_ENABLED)
+            return;
+
         requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get());
     }
 
@@ -107,7 +113,17 @@ public final class UpdateChecker {
                 version.contains("SNAPSHOT"); // eg. 3.5.SNAPSHOT
     }
 
+    /// Requests an update check on the FX thread.
+    ///
+    /// This method is a no-op when [`Metadata#SELF_UPDATE_ENABLED`] is `false`, so forks never query
+    /// the official update source and `latestVersion` stays `null`. Callers observe a disabled build
+    /// through [`Metadata#SELF_UPDATE_ENABLED`] rather than through an "up to date" result.
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview) {
+        if (!Metadata.SELF_UPDATE_ENABLED) {
+            LOG.info("Self-update is disabled for this build, skipping update check");
+            return;
+        }
+
         Platform.runLater(() -> {
             if (isCheckingUpdate())
                 return;

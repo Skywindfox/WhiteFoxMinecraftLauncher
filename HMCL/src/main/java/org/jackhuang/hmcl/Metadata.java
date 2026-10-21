@@ -34,12 +34,19 @@ public final class Metadata {
     private Metadata() {
     }
 
-    public static final String NAME = "HMCL";
-    public static final String FULL_NAME = "Hello Minecraft! Launcher";
+    /// Short product name, used in window titles, logs and the `${launcher_name}` game placeholder.
+    public static final String NAME = "WhiteFox";
+
+    /// Full product name shown on the about page and by the Windows shell.
+    public static final String FULL_NAME = "WhiteFox Minecraft Launcher";
+
     public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getAttribute("hmcl.version", "@develop@"));
 
     /// Explicit Application User Model ID used for Windows taskbar grouping and pinning.
-    public static final String WINDOWS_APP_USER_MODEL_ID = "org.jackhuang.hmcl";
+    ///
+    /// This fork uses its own ID so that a pinned shortcut is not merged with the upstream launcher,
+    /// whose window would otherwise be treated as the same application.
+    public static final String WINDOWS_APP_USER_MODEL_ID = "org.whitefox.launcher";
 
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
@@ -48,12 +55,27 @@ public final class Metadata {
     public static final int MINIMUM_SUPPORTED_JAVA_VERSION = 17;
     public static final int RECOMMENDED_JAVA_VERSION = 21;
 
-    public static final String PUBLISH_URL = "https://hmcl.huangyuhui.net";
+    /// Base URL of the launcher website, used by the about page, error messages and download links.
+    ///
+    /// Forks can point this elsewhere with the `hmcl.fork.website` build attribute
+    /// (see `config/fork.properties`); the upstream site is only a fallback.
+    public static final String PUBLISH_URL = JarUtils.getAttribute("hmcl.fork.website", "https://github.com/Skywindfox/WhiteFoxMinecraftLauncher");
     public static final String DOWNLOAD_URL = PUBLISH_URL + "/download";
-    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", PUBLISH_URL + "/api/update_link");
-    public static final String MANUAL_UPDATE_URL = "https://github.com/HMCL-dev/HMCL/releases";
+    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override",
+            JarUtils.getAttribute("hmcl.fork.update_url", PUBLISH_URL + "/api/update_link"));
+    public static final String MANUAL_UPDATE_URL = JarUtils.getAttribute("hmcl.fork.manual_update_url", "https://github.com/Skywindfox/WhiteFoxMinecraftLauncher/releases");
 
-    public static final String DOCS_URL = "https://docs.hmcl.net";
+    /// Whether this build may check for, download and install launcher updates published by the
+    /// official HMCL release pipeline.
+    ///
+    /// This is an unofficial fork, so it is disabled unless the `hmcl.self_update.enabled` system
+    /// property is set to `true`. Installing an official build would silently replace this launcher
+    /// and discard fork-specific behavior, so a fork must never let that happen by accident.
+    public static final boolean SELF_UPDATE_ENABLED = Boolean.getBoolean("hmcl.self_update.enabled");
+
+    /// Documentation site. Derived URLs assume the site provides the same paths as upstream, so a
+    /// fork that sets `hmcl.fork.docs` must also serve `/changelog/`, `/help.html` and `/eula/hmcl.html`.
+    public static final String DOCS_URL = JarUtils.getAttribute("hmcl.fork.docs", "https://docs.hmcl.net");
     public static final String CONTACT_URL = DOCS_URL + "/help.html";
     public static final String CHANGELOG_URL = DOCS_URL + "/changelog/";
     public static final String EULA_URL = DOCS_URL + "/eula/hmcl.html";

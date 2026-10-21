@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -33,7 +34,11 @@ public final class DownloadProviders {
     private DownloadProviders() {
     }
 
-    private static final String DEFAULT_BMCLAPI_ROOT = "https://bmclapi2.bangbang93.com";
+    /// Default mirror root for game files in mainland China.
+    ///
+    /// Forks can replace it with the `hmcl.fork.bmclapi_root` build attribute so the launcher does not
+    /// depend on a third-party mirror owned by somebody else.
+    private static final String DEFAULT_BMCLAPI_ROOT = JarUtils.getAttribute("hmcl.fork.bmclapi_root", "https://bmclapi2.bangbang93.com");
     private static final String BMCLAPI_ROOT;
 
     static {
