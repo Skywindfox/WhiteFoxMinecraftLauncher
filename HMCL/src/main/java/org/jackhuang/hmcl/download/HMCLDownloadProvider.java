@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.RegionUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -118,6 +119,17 @@ public final class HMCLDownloadProvider extends DownloadProvider {
     private final String bmclRoot;
     private final List<MirrorRule> rules;
 
+    /// Root of the launcher's own metadata mirror (Cleanroom and FML libraries).
+    ///
+    /// Forks replace it with the `hmcl.fork.metadata_mirror` build attribute so the build does not
+    /// silently depend on an individual domain.
+    private static final String METADATA_MIRROR = JarUtils.getAttribute("hmcl.fork.metadata_mirror", "https://hmcl.glavo.site");
+
+    /// Root of the addon repository mirror (Modrinth, CurseForge and ForgeCDN).
+    ///
+    /// Forks replace it with the `hmcl.fork.addon_mirror` build attribute.
+    private static final String ADDON_MIRROR = JarUtils.getAttribute("hmcl.fork.addon_mirror", "https://mod.mcimirror.top");
+
     public HMCLDownloadProvider(String bmclRoot) {
         this.bmclRoot = bmclRoot;
         this.rules = List.of(
@@ -138,15 +150,15 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 new MirrorRule("https://authlib-injector.yushi.moe", bmclRoot + "/mirrors/authlib-injector"),
                 new MirrorRule("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
                 new MirrorRule("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
-                new MirrorRule("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
-                new MirrorRule("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
+                new MirrorRule(METADATA_MIRROR + "/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
+                new MirrorRule(METADATA_MIRROR + "/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
                 new MirrorRule("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto"),
 
                 // https://github.com/mcmod-info-mirror/mcim-rust-api
-                new MirrorRule("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth", true),
-                new MirrorRule("https://cdn.modrinth.com", "https://mod.mcimirror.top", true),
-                new MirrorRule("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge", true),
-                new MirrorRule("https://edge.forgecdn.net", "https://mod.mcimirror.top", true)
+                new MirrorRule("https://api.modrinth.com", ADDON_MIRROR + "/modrinth", true),
+                new MirrorRule("https://cdn.modrinth.com", ADDON_MIRROR, true),
+                new MirrorRule("https://api.curseforge.com", ADDON_MIRROR + "/curseforge", true),
+                new MirrorRule("https://edge.forgecdn.net", ADDON_MIRROR, true)
         );
     }
 
@@ -158,7 +170,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchOfficial = ForgeRemoteVersion.fetchAsync(this, gameVersion);
 
                 DownloadSource source = versionListSource;
-                if (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL) {
+                if (!RegionUtils.isIsChinaMainlandMachine() && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
                     return fetchOfficial;
                 }
 
@@ -173,7 +185,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchOfficial = NeoForgeRemoteVersion.fetchAsync(this, gameVersion);
 
                 DownloadSource source = versionListSource;
-                if (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL) {
+                if (!RegionUtils.isIsChinaMainlandMachine() && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
                     return fetchOfficial;
                 }
                 Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchBMCL = NeoForgeRemoteVersion.fetchBMCLAsync(bmclRoot, gameVersion);

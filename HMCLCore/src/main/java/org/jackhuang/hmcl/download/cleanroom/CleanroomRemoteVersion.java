@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -39,7 +40,11 @@ import java.util.TreeSet;
 public final class CleanroomRemoteVersion extends ComponentRemoteVersion {
     private static final GameVersionNumber GAME_VERSION_1_12_2 = GameVersionNumber.asGameVersion("1.12.2");
 
-    public static final WebURL LOADER_LIST_URL = WebURL.parse("https://hmcl.glavo.site/metadata/cleanroom/index.json");
+    /// Root of the metadata mirror that hosts Cleanroom builds, replaceable by the
+    /// `hmcl.fork.metadata_mirror` build attribute.
+    private static final String METADATA_MIRROR = JarUtils.getAttribute("hmcl.fork.metadata_mirror", "https://hmcl.glavo.site");
+
+    public static final WebURL LOADER_LIST_URL = WebURL.parse(METADATA_MIRROR + "/metadata/cleanroom/index.json");
 
     public static Task<ComponentRemoteVersionList<CleanroomRemoteVersion>> fetchAsync(
             DownloadProvider downloadProvider, GameVersionNumber gameVersion) {
@@ -58,7 +63,7 @@ public final class CleanroomRemoteVersion extends ComponentRemoteVersion {
             for (ReleaseResult version : results) {
                 versions.add(new CleanroomRemoteVersion(
                         GAME_VERSION_1_12_2, version.name, Instant.parse(version.createdAt),
-                        List.of("https://hmcl.glavo.site/metadata/cleanroom/files/cleanroom-%s-installer.jar".formatted(version.name))
+                        List.of(METADATA_MIRROR + "/metadata/cleanroom/files/cleanroom-%s-installer.jar".formatted(version.name))
                 ));
             }
             return ComponentRemoteVersionList.of(GameComponentType.CLEANROOM, versions);

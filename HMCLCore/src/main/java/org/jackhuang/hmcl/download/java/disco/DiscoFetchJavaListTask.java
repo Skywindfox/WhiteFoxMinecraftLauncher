@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.java.JavaPackageType;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -34,7 +35,12 @@ import java.util.*;
  */
 public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>>> {
 
-    public static final String API_ROOT = System.getProperty("hmcl.discoapi.override", "https://api.foojay.io/disco/v3.0");
+    /// Root of the foojay Disco API used to list Java runtimes.
+    ///
+    /// Forks can replace the default with the `hmcl.fork.discoapi_root` build attribute, and any build
+    /// can override it at runtime with `-Dhmcl.discoapi.override=<url>`.
+    public static final String API_ROOT = System.getProperty("hmcl.discoapi.override",
+            JarUtils.getAttribute("hmcl.fork.discoapi_root", "https://api.foojay.io/disco/v3.0"));
 
     private final DiscoJavaDistribution distribution;
     private final String archiveType;

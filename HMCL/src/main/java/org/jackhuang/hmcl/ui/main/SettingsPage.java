@@ -108,10 +108,22 @@ public final class SettingsPage extends ScrollPane {
                     updatePane.setItems(List.of(UpdateChannel.STABLE, UpdateChannel.DEVELOPMENT));
                     updatePane.setDescriptionConverter(channel -> i18n("update.note." + channel.channelName));
 
+                    // A build without self-update cannot act on any channel, so do not pretend it can.
+                    updatePane.setDisable(!Metadata.SELF_UPDATE_ENABLED);
+
                     final StringProperty lblUpdateSubProperty = updatePane.subtitleProperty();
 
                     {
                         updateListener = any -> {
+                            if (!Metadata.SELF_UPDATE_ENABLED) {
+                                // Fork builds never contact the update source, so there is no state to report.
+                                updateButton.setVisible(false);
+                                updateButton.setManaged(false);
+                                updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), false);
+                                lblUpdateSubProperty.set(i18n("update.disabled"));
+                                return;
+                            }
+
                             boolean outdated = UpdateChecker.isOutdated();
 
                             updateButton.setVisible(outdated);
@@ -149,6 +161,7 @@ public final class SettingsPage extends ScrollPane {
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.setSubtitle(i18n("update.preview.subtitle"));
                     previewPane.selectedProperty().bindBidirectional(settings().acceptPreviewUpdateProperty());
+                    previewPane.setDisable(!Metadata.SELF_UPDATE_ENABLED);
 
                     InvalidationListener checkUpdateListener = e -> {
                         UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());

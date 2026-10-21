@@ -1,4 +1,3 @@
-import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.addon.FormatJsonFile
 import org.jackhuang.hmcl.gradle.addon.UpdateAddonProjectInfos
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
@@ -26,13 +25,20 @@ plugins {
 
 val projectConfig = PropertiesUtils.load(rootProject.file("config/project.properties").toPath())
 
+/// Fork-specific service endpoints and credentials. See `config/fork.properties` and `FORK.md`.
+val forkConfig = PropertiesUtils.load(rootProject.file("config/fork.properties").toPath())
+
+/// Reads a fork value, preferring the environment variable so CI secrets win over the checked-in file.
+fun forkValue(env: String, key: String): String =
+    System.getenv(env) ?: forkConfig.getProperty(key).orEmpty()
+
 val isOfficial = JenkinsUtils.IS_ON_CI || GitHubActionUtils.IS_ON_OFFICIAL_REPO
 
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
 val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
 
-val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
-val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
+val microsoftAuthId = forkValue("MICROSOFT_AUTH_ID", "microsoft_auth_id")
+val curseForgeApiKey = forkValue("CURSEFORGE_API_KEY", "curseforge_apikey")
 
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
 
@@ -164,6 +170,24 @@ val hmclProperties = buildList {
     add("hmcl.version.type" to versionType)
     add("hmcl.microsoft.auth.id" to microsoftAuthId)
     add("hmcl.curseforge.apikey" to curseForgeApiKey)
+
+    // Fork-only overrides. Blank values are omitted so the launcher keeps its upstream defaults.
+    fun addForkProperty(attribute: String, env: String, key: String) {
+        val value = forkValue(env, key).trim()
+        if (value.isNotEmpty()) {
+            add(attribute to value)
+        }
+    }
+
+    addForkProperty("hmcl.fork.website", "FORK_WEBSITE", "website")
+    addForkProperty("hmcl.fork.docs", "FORK_DOCS", "docs")
+    addForkProperty("hmcl.fork.manual_update_url", "FORK_MANUAL_UPDATE_URL", "manual_update_url")
+    addForkProperty("hmcl.fork.update_url", "FORK_UPDATE_URL", "update_url")
+    addForkProperty("hmcl.fork.bmclapi_root", "FORK_BMCLAPI_ROOT", "bmclapi_root")
+    addForkProperty("hmcl.fork.metadata_mirror", "FORK_METADATA_MIRROR", "metadata_mirror")
+    addForkProperty("hmcl.fork.addon_mirror", "FORK_ADDON_MIRROR", "addon_mirror")
+    addForkProperty("hmcl.fork.discoapi_root", "FORK_DISCOAPI_ROOT", "discoapi_root")
+
     add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
     add("hmcl.lwjgl-unsafe-agent.version" to libs.lwjgl.unsafe.agent.get().version!!)
 }
@@ -253,10 +277,6 @@ tasks.processResources {
         from(createLocaleNamesResourceBundle.map { it.outputDirectory })
     }
 
-    inputs.property("terracotta_version", libs.versions.terracotta)
-    doLast {
-        upgradeTerracottaConfig.get().checkValid()
-    }
 }
 
 fun artifactFile(ext: String) = jarPath.resolveSibling(jarPath.nameWithoutExtension + '.' + ext)
@@ -403,28 +423,6 @@ tasks.register<JavaExec>("run") {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
         logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
     }
-}
-
-// terracotta
-
-val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
-    val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
-    val source = layout.projectDirectory.file("terracotta-template.json");
-
-    classifiers.set(
-        listOf(
-            "windows-x86_64", "windows-arm64",
-            "macos-x86_64", "macos-arm64",
-            "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
-            "freebsd-x86_64"
-        )
-    )
-
-    version.set(libs.versions.terracotta)
-    downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
-
-    templateFile.set(source)
-    outputFile.set(destination)
 }
 
 // Check Translations

@@ -352,7 +352,6 @@ public final class LegacyConfigMigrator {
         JsonObject current = new JsonObject();
         current.add(JsonSchema.PROPERTY_SCHEMA, JsonUtils.GSON.toJsonTree(UserState.CURRENT_SCHEMA, JsonSchema.class));
         copyMember(legacy, current, "agreementVersion");
-        copyMember(legacy, current, "terracottaAgreementVersion");
         copyMember(legacy, current, "platformPromptVersion");
         return Objects.requireNonNull(JsonUtils.GSON.fromJson(current, UserState.class));
     }

@@ -98,8 +98,17 @@ public final class UpdateHandler {
         return false;
     }
 
+    /// Offers to download `version` and replace the running launcher with it.
+    ///
+    /// This is refused when [`Metadata#SELF_UPDATE_ENABLED`] is `false`: a fork must not overwrite
+    /// itself with an official build, even if something managed to obtain a [`RemoteVersion`].
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
+
+        if (!Metadata.SELF_UPDATE_ENABLED) {
+            LOG.warning("Refusing to update to " + version + ": self-update is disabled for this build");
+            return;
+        }
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
             Controllers.dialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL), i18n("message.error"), MessageType.ERROR);

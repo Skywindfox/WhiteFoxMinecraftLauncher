@@ -44,7 +44,6 @@ public final class UserSettingsTest {
             Files.writeString(legacyConfig, """
                     {
                       "agreementVersion": 1,
-                      "terracottaAgreementVersion": 2,
                       "platformPromptVersion": 3,
                       "logRetention": 7,
                       "enableOfflineAccount": true,
@@ -66,7 +65,6 @@ public final class UserSettingsTest {
             assertEquals(UserSettings.CURRENT_SCHEMA, settings.getSchema());
             assertEquals(UserState.CURRENT_SCHEMA, state.getSchema());
             assertEquals(1, state.agreementVersionProperty().get());
-            assertEquals(2, state.terracottaAgreementVersionProperty().get());
             assertEquals(3, state.platformPromptVersionProperty().get());
             assertEquals(7, settings.logRetentionProperty().get());
             assertTrue(settings.enableOfflineAccountProperty().get());
@@ -78,7 +76,6 @@ public final class UserSettingsTest {
             assertEquals(UserSettings.CURRENT_SCHEMA.url(),
                     serializedSettings.get(JsonSchema.PROPERTY_SCHEMA).getAsString());
             assertFalse(serializedSettings.has("agreementVersion"));
-            assertFalse(serializedSettings.has("terracottaAgreementVersion"));
             assertFalse(serializedSettings.has("platformPromptVersion"));
             assertFalse(serializedSettings.has("selectedAccount"));
             assertFalse(serializedSettings.has("accounts"));

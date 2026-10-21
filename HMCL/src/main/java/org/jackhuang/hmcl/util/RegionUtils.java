@@ -17,36 +17,31 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
+/// Detects whether this machine is located in mainland China.
+///
+/// This is a purely local heuristic used to pick download mirrors and to decide which offline-account
+/// restrictions apply. It never contacts a remote service: probing the public IP through a third-party
+/// service used to gate downloads, and that gate is intentionally gone in this fork.
 @NotNullByDefault
 public final class RegionUtils {
 
-    /// Pre-check if the network is in China Mainland to avoid blocking the UI thread.
-    public static void init() {
-        if (IS_CHINA_MAINLAND_MACHINE) {
-            Schedulers.io().execute(RegionUtils::isIsChinaMainlandNetwork);
-        }
-    }
-
     private static final boolean IS_CHINA_MAINLAND_MACHINE = checkMachineIsChinaMainland();
 
+    /// Checks the system time zone, locale and (on Windows) the user's geographical location.
+    ///
+    /// A machine is treated as mainland China when the zone is `Asia/Shanghai`, or when its UTC offset is
+    /// +8 and either the locale country is `CN` or the Windows geo nation ID is China (45).
     private static boolean checkMachineIsChinaMainland() {
         if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
             return true;
@@ -68,47 +63,9 @@ public final class RegionUtils {
         return false;
     }
 
+    /// Returns whether this machine is considered to be located in mainland China.
     public static boolean isIsChinaMainlandMachine() {
         return IS_CHINA_MAINLAND_MACHINE;
-    }
-
-    private static volatile @Nullable Boolean isChinaMainlandNetwork;
-
-    private static boolean checkChinaMainlandNetwork() {
-        @NotNullByDefault
-        @JsonSerializable
-        record IpWhoIsResponse(boolean success, String country_code) {
-        }
-
-        try {
-            LOG.info("Fetching network information");
-            IpWhoIsResponse result = JsonUtils.fromNonNullJson(NetworkUtils.doGet("https://ipwho.is"), IpWhoIsResponse.class);
-            return !result.success || "CN".equalsIgnoreCase(result.country_code);
-        } catch (Throwable e) {
-            LOG.warning("Failed to get the network information", e);
-            return true;
-        }
-    }
-
-    public static boolean isIsChinaMainlandNetwork() {
-        if (!IS_CHINA_MAINLAND_MACHINE) {
-            return false;
-        }
-
-        Boolean value = isChinaMainlandNetwork;
-        if (value != null)
-            return value;
-
-        synchronized (RegionUtils.class) {
-            value = isChinaMainlandNetwork;
-
-            if (value != null)
-                return value;
-
-            boolean result = checkChinaMainlandNetwork();
-            isChinaMainlandNetwork = result;
-            return result;
-        }
     }
 
     private RegionUtils() {

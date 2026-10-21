@@ -34,6 +34,7 @@ import javafx.scene.control.ButtonType;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.fork.ForkAccessLock;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
@@ -135,6 +136,14 @@ public final class Launcher extends Application {
                 showAlert(AlertType.WARNING, i18n("fatal.illegal_char"));
             }
 
+            // The fork is meant for a limited audience: refuse to start until the access code is known.
+            // This runs before Controllers.initialize() so a locked launcher never builds its UI.
+            if (!ForkAccessLock.ensureUnlocked()) {
+                LOG.info("Access code not provided, exiting");
+                EntryPoint.exit(0);
+                return;
+            }
+
             // runLater to ensure SettingsManager.init() finished initialization
             Platform.runLater(() -> {
                 // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
@@ -142,7 +151,6 @@ public final class Launcher extends Application {
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
 
-                RegionUtils.init();
                 UpdateChecker.init();
 
                 primaryStage.show();
